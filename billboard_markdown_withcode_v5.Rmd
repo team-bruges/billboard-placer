@@ -1,0 +1,194 @@
+---
+title: "Research on Optimal Billboard Placement "  
+author: "Team_Bruges consisting of Raghavendra C (71610053); Rahul Gupta (71610054); Sarath Krishna (71610068); Vasavi (71610100)"  
+date: "12 March 2016"
+Output: html_document
+---
+
+
+<H2> Optimal placement of Billboards for I-Care cardio care Hospitals in Chandigarh </H2>
+
+
+<H4>Client's Business </H4>
+
+<P>I-Care Cardio care is a leading cardio care hospital in Tier1 citiesand is expanding its presence to Tier2 cities that include Chandigarh, Bhopal, Bhubaneswar, Pune. </P>
+
+<P> We, at Bruges marketing research are tasked to promote the I-care brand in Chandigarh.We are looking at leveraging strategically located billboards to increase the awareness and recall of the brand as according  to The Arbitron National In-Car Study, 2009 edition, 71% of people traveling look at billboards and 68% frequently or sometimes make their shopping decisions while in the car </P>
+
+<H4>Decision Problem :</H4>
+
+<P>Where should we hire / place the billboards to maximize the recall of our brand including the numbers to reach during the time they need us the most? </P>
+
+<H4>Research objective : </H4>
+
+<P>Identify the top 4 locations for billboards based on concentration of  places most visited by the target consumer group i.e. middle and upper middle class</P>
+
+
+<H4>Location : Chandigarh</H4>
+
+<P>Why Chandigarh?</P>
+
+<P>We chose Chandigarh because of its unique characteristics, which make it attractive for our client.  Chandigarh, which is one of planned cities in the country, has the third highest per capita income in the country.  In addition, Chandigarh is one of the leading cities in the country in terms of Human Development Index, making it one of the attractive tier 2 cities in the country for our client (Source http://indiatoday.intoday.in/story/Chandigarh+tops+in+HDI,+GDI/1/90699.html ).   
+Human development index gives a perspective on how evolved the city is in terms of socio economic parameters as it measures a city across three dimensions --a long and healthy life; adult literacy rate; and decent standard of living.   In addition, the city has well evolved healthcare infrastructure, which has already made it a healthcare destination for people in the neighbouring states.</P> 
+
+<P>We decided to leverage google maps and associated entities on google map to identify these locations. </P> 
+
+<H4>Entity List</H4>
+
+<P>The main construct in the research objective involves understanding the concentration of middle and upper middle class population in Chandigarh city. At first we considered various entities that include malls, hospitals, department stores, convenience stores, clothing stores and super markets. From the above mentioned entity list we have shortlisted department stores, convenience stores, clothing stores and supermarkets. The reason for choosing them as their placement is indicative of
+
+* The concentration of residential population and predominantly middle and upper middle class which is the target customer base  
+* Regular frequency of visits to these entities by our target segment for their daily chores
+* Greater number of footfalls of the target segment around these areas</P>
+
+Here is the code to identify the locations
+
+**Step 1** - Let's load the the required packages
+
+```{r, message=FALSE, warning=FALSE}
+###################################################################
+# Install and include required R libraries
+library("plotGoogleMaps")
+library("RCurl")
+library("jsonlite")
+library("geosphere")
+###################################################################
+```
+
+**Step 2** - Let's get the Google Map API Key and location data
+
+```{r}
+###################################################################
+# Define Google Map API Key
+key = "AIzaSyA9cyPau9sou2ZOTRkyI7tRpTm-9X5otBs"
+###################################################################
+
+###################################################################
+# Get the latitude and longitude for city of chandigarh
+# library(ggmap)
+# geocode("CHANDIGARH")
+#--- lon      lat
+#--- 1 76.77942 30.73331
+###################################################################
+```
+
+
+
+**Step 3** - Let's collect Spatial Data on selected proxy points in a radius of 5 km from centre of chandigarh
+
++ **step 3.a** Collect data for Convinience stores
+```{r}
+# Proxy 1 - convenience_store
+url = paste0("https://maps.googleapis.com/maps/api/place/radarsearch/json?&query=conv_store+in+chandigarh&types=convenience_store&location=30.73331,76.77942&radius=5000&key=",key)
+doc <- getURL(url)
+x <- jsonlite::fromJSON(doc)
+convenience_store = x$results$geometry$location
+```
+
++ **Step 3.b** Let's collect data for clothing stores
+```{r}
+#Proxy 2 - clothing_store
+
+url = paste0("https://maps.googleapis.com/maps/api/place/radarsearch/json?&query=cloth_store+in+chandigarh&types=clothing_store&location=30.73331,76.77942&radius=5000&key=",key)
+doc <- getURL(url)
+x <- jsonlite::fromJSON(doc)
+clothing_store = x$results$geometry$location
+```
+
++ **Step 3.c** Collect data for grocery or super market stores
+```{r}
+# Proxy 3 - Grocery or super market stores
+
+url = paste0("https://maps.googleapis.com/maps/api/place/radarsearch/json?&query=groc_supermarket_store+in+chandigarh&types=grocery_or_supermarket&location=30.73331,76.77942&radius=5000&key=",key)
+doc <- getURL(url)
+x <- jsonlite::fromJSON(doc)
+grocery_or_supermarket = x$results$geometry$location
+
+```
+
+
++ **Step 3.d** Collect data department store
+```{r}
+# Proxy 4 - department_store
+
+url = paste0("https://maps.googleapis.com/maps/api/place/radarsearch/json?&query=dep_store+in+chandigarh&types=department_store&location=30.73331,76.77942&radius=5000&key=",key)
+doc <- getURL(url)
+x <- jsonlite::fromJSON(doc)
+department_store = x$results$geometry$location
+```
+
+**Step 4** Assign type column to all proxy data
+```{r}
+# assign type column to all proxy data
+convenience_store$type = "convenience"
+clothing_store$type = "clothing"
+grocery_or_supermarket$type = "grocery_or_supermarket"
+department_store$type = "department"
+```
+
+**Step 5** Bind all proxies to single data frame
+```{r}
+store <- rbind(convenience_store, clothing_store, grocery_or_supermarket, department_store )
+
+```
+
+
+**Step 6** Plot all proxy data on map
+```{r}
+
+sample = store
+coordinates(sample) <-~ lng +lat # Create cordinates
+proj4string(sample) = CRS('+proj=longlat +datum=WGS84') # Add Projections
+m<-mcGoogleMaps(sample,zcol = "type", mapTypeId='ROADMAP') # Plot on Google maps
+
+```
+
+**Step 7** Plot the proxy entities and do clustering based on distance matrix
+```{r}
+# Get the coordinates
+p2 = store[,2:1]
+
+# calculate distances
+dist_mat = matrix(0,nrow(p2),nrow(p2))
+
+for (i in 1:nrow(p2)){
+  for (j in 1:nrow(p2)){
+    dist_mat[i,j] = distCosine(p2[i,],p2[j,], r=6378173)/1000    
+  }
+}
+
+```
+
+**Step 8** Now lets create clusters based in distance
+```{r}
+
+# Create clusters based on distances
+fit <- hclust(as.dist(dist_mat), method="ward.D")
+plot(fit) # display dendogram
+
+groups <- cutree(fit, k=18) # cut tree into 18 clusters
+# draw dendogram with red borders around the 18 clusters
+rect.hclust(fit, k=18, border="red") 
+
+sample$group = groups # Assign cluster groups
+```
+
+**Step 9** Plot stores with clusters as labels
+```{r}
+# Plot stores with cluster as label
+m <- mcGoogleMaps(sample, mapTypeId='ROADMAP', zcol="group")
+```
+
+![Image](C:\image/image/mapdc.JPG)
+
+
+Based on the entity list chosen, we select 4 areas around
+* **Janmarg** in the center of the city, which has a cluster of 76 of the entities of our interest  
+* **Sukna Path**, which has has a cluster of 45 of the entities of our interest  
+* **Elante mall / Purv Marg**, which has a cluster of 47 of the entities of our interest  
+* **Udyan Path**, which has 25 of the entities of our interest
+
+The places were chosen as  
+* They have higher concentration of our entities of our choice, which indicate greater density of target population  
+* The places are also expected to register higher frequency and greater footfalls from the target segment, which will help in increasing the brand recall  
+* Ensure the 4 billboards are well spread out and could give good coverage across the city
